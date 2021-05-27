@@ -217,46 +217,41 @@ app.post('/transferFromBank',(req,res)=>{
    
 console.log(req.body.UserId,req.body.TransferAmmount);
 let STAT1,STAT2,UID,UTA;
-   contract.methods.transfer(req.body.UserId,req.body.TransferAmmount.toString()).send({from: account, gas: GAS}).then((result)=>{
+UTA=req.body.TransferAmmount;
+UID=req.body.UserId;
+contract.methods.transfer(UID,UTA).send({from: account, gas: GAS}).then((result)=>{
         console.log(result.status)
         STAT1=result.status;
-        UID=req.body.UserId;
-        UTA=req.body.TransferAmmount.toString();
-       })
+       
+        contract.methods.burn(UTA.toString()).send({from: account, gas: GAS}).then((result)=>{
+        STAT2=result.status;
+        console.log("STATUS= "+ STAT2);
+        let jsonResult=`{"status1" : "${STAT1}","status2" : "${STAT2}","UserId":"${UID}","TransferAmmount":"${UTA}"}`;
+        res.json(JSON.parse(jsonResult));
+        console.log(JSON.parse(jsonResult));
+        })
+            .catch((err)=>{console.log("burn :"+err)
+            let formaterror=`{"errorcode" :"TFB2","message" : "${err}"}`
+            console.log(JSON.parse(formaterror));
+            res.json(JSON.parse(formaterror));
+            
+            ;}) 
+
+       
+        
+})
         .catch((err)=>{console.log("Bank Transfer Error:"+err)
         let formaterror=`{"errorcode" :"TFB1","message" : "${err}"}`
                 console.log(JSON.parse(formaterror));
                 res.json(JSON.parse(formaterror));
+                    return ;
         
-        
-        ;})
-
-
-
-        function formatjson(){
-            contract.methods.burn(UTA).send({from: account, gas: GAS}).then((result)=>{
-            STAT2=result.status;
-            console.log("STATUS= "+ STAT2);
-            let jsonResult=`{"status1" : "${STAT1}","status2" : "${STAT2}","UserId":"${UID}","TransferAmmount":"${UTA}"}`;
-            res.json(JSON.parse(jsonResult));
-            console.log(JSON.parse(jsonResult));
-            })
-                .catch((err)=>{console.log("burn :"+err)
-                let formaterror=`{"errorcode" :"TFB2","message" : "${err}"}`
-                console.log(JSON.parse(formaterror));
-                res.json(JSON.parse(formaterror));
-                
-                ;}) 
-         }
-         setTimeout(formatjson, 10000);
+        })
 
 
 
 
 
-
-
-   
 })
 
 
