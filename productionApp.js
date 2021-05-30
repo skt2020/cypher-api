@@ -3,94 +3,14 @@ const Web3 = require("web3");
 const app = express();
 app.use(express.json());
 const ethNetwork = process.env.ETH_NETWORK;
-const PRIVATE_KEY = process.env.PRIVATE_KEY;
-const ContractDepId = process.env.ContractId;
 const BankId = process.env.BANK_ID;
 const GAS = process.env.GAS_VALUE;
 const web3 = new Web3(new Web3.providers.HttpProvider(ethNetwork));
-const abi = require("./ABI");
 const Accounts = require("web3-eth-accounts");
-
 const port = process.env.PORT || 3000;
-
-// Server is running on port 3000
-app.listen(port, () =>
-  console.log("Server is running... Visit http://localhost:3000")
-);
-/*****************************************************DEV ROUTES**************************************************************/
-// DEV ROUTE - to check running status of API
-app.get("/", (req, res) => {
-  res.json({ message: "Api is running on cypher server" });
-});
-// DEV ROUTE - to check contract deployment balance
-/*app.get('/contractdepbel',(req,res)=>{
-    web3.eth.getBalance(ContractDepId,async(err,result)=>{
-        if(err){console.log(err);return;}
-        let balance=web3.utils.fromWei(result,"ether");
-        console.log(balance+"ETH");
-        res.json({"Contract_Deployment_Balance": balance+"ETH"})
-    })
-   
-})
-
-*/
-
-var contract = new web3.eth.Contract(abi, ContractDepId);
-//console.log(contract);
-app.get("/contractabi", (req, res) => {
-  res.json(abi);
-});
-
-/////////////////////////////////////
-console.log("\n***********************\n");
-// contract.methods.balanceOf(BankId).call().then((result)=>{
-//     console.log("result= "+ result);
-// }).catch((err)=>{console.log("ERROR :"+err);})
-// contract.methods.name().call().then((result)=>{
-//     console.log("name= "+ result);
-// }).catch((err)=>{console.log("ERROR :"+err);})
-// contract.methods.symbol().call().then((result)=>{
-//     console.log("Symbol= "+ result);
-// }).catch((err)=>{console.log("ERROR :"+err);})
-// contract.methods.decimals().call().then((result)=>{
-//     console.log("decimals= "+ result);
-// }).catch((err)=>{console.log("ERROR :"+err);})
-//web3.eth.handleRevert=true;
-web3.eth.accounts.wallet.add(PRIVATE_KEY);
-const account = web3.eth.accounts.wallet[0].address;
-console.log(account);
-
-///////////////////transfer///////////////////////
-app.get("/test", (req, res) => {
-  contract.methods
-    .transfer("0x01B7Ca9BFf093C69A1F8dA64735A1DBf01B27207", "50")
-    .send({ from: account, gas: GAS })
-    .then((result) => {
-      console.log(result.status);
-      res.send(result);
-    })
-    .catch((err) => {
-      console.log(err);
-    });
-});
-///////////////////////transferfrom//////////////////////////
-/*  contract.methods.transferFrom('0x01B7Ca9BFf093C69A1F8dA64735A1DBf01B27207','0x40E767878739529D5D244B3cbd4bC6a2e9438365','30').send({from: account, gas: GAS}).then((result)=>{
-        console.log("transfer from :"+result.status)
-       })
-        .catch((err)=>{console.log("transfer from :"+err);})*/
-///////////////////////////burn////////////////////////////////
-/*contract.methods.burn('5').send({from: account, gas: GAS}).then((result)=>{
-    console.log("burn :"+result.status)
-   })
-    .catch((err)=>{console.log("transfer from :"+err);})*/
-
-///////////////////////////burnfrom////////////////////////////////
-/*contract.methods.burnFrom('0x01B7Ca9BFf093C69A1F8dA64735A1DBf01B27207','15').send({from: account, gas: GAS}).then((result)=>{
-    console.log("burn from :"+result.status)
-   })
-    .catch((err)=>{console.log("burn from :"+err);}) */
-
+app.listen(port, () => console.log("Server is running on port " + port));
 /*****************************************************PRODUCTION ROUTES**************************************************************/
+
 // Production Route - to get all details from bank
 app.get("/getBankDetails", (req, res) => {
   // res.json({"Name":"Api is running on cypher server"})
@@ -233,41 +153,39 @@ Response
 app.post("/transferFromBank", (req, res) => {
   console.log(req.body.UserId, req.body.TransferAmmount);
   let STAT1, STAT2, UID, UTA;
+  UTA = req.body.TransferAmmount;
+  UID = req.body.UserId;
   contract.methods
-    .transfer(req.body.UserId, req.body.TransferAmmount.toString())
+    .transfer(UID, UTA)
     .send({ from: account, gas: GAS })
     .then((result) => {
       console.log(result.status);
       STAT1 = result.status;
-      UID = req.body.UserId;
-      UTA = req.body.TransferAmmount.toString();
+
+      contract.methods
+        .burn(UTA.toString())
+        .send({ from: account, gas: GAS })
+        .then((result) => {
+          STAT2 = result.status;
+          console.log("STATUS= " + STAT2);
+          let jsonResult = `{"status1" : "${STAT1}","status2" : "${STAT2}","UserId":"${UID}","TransferAmmount":"${UTA}"}`;
+          res.json(JSON.parse(jsonResult));
+          console.log(JSON.parse(jsonResult));
+        })
+        .catch((err) => {
+          console.log("burn :" + err);
+          let formaterror = `{"errorcode" :"TFB2","message" : "${err}"}`;
+          console.log(JSON.parse(formaterror));
+          res.json(JSON.parse(formaterror));
+        });
     })
     .catch((err) => {
       console.log("Bank Transfer Error:" + err);
       let formaterror = `{"errorcode" :"TFB1","message" : "${err}"}`;
       console.log(JSON.parse(formaterror));
       res.json(JSON.parse(formaterror));
+      return;
     });
-
-  function formatjson() {
-    contract.methods
-      .burn(UTA)
-      .send({ from: account, gas: GAS })
-      .then((result) => {
-        STAT2 = result.status;
-        console.log("STATUS= " + STAT2);
-        let jsonResult = `{"status1" : "${STAT1}","status2" : "${STAT2}","UserId":"${UID}","TransferAmmount":"${UTA}"}`;
-        res.json(JSON.parse(jsonResult));
-        console.log(JSON.parse(jsonResult));
-      })
-      .catch((err) => {
-        console.log("burn :" + err);
-        let formaterror = `{"errorcode" :"TFB2","message" : "${err}"}`;
-        console.log(JSON.parse(formaterror));
-        res.json(JSON.parse(formaterror));
-      });
-  }
-  setTimeout(formatjson, 10000);
 });
 
 // Production Route - to post money from one User to Other account
