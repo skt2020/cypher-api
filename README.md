@@ -15,7 +15,7 @@ This Cipher API is absolutely free and open-source project and available for int
 
 ###### Version 1.0.5  [![Cypher for Android - Version 1.0.5 ](https://custom-icon-badges.herokuapp.com/badge/-Download-blue?style=for-the-badge&logo=download&logoColor=white "Cypher for Android - Version 1.0.5")](https://drive.google.com/file/d/1YTIoGBgefuWg8tYUC7lUNOaeBv73lW-N/view?usp=sharing)
 
-## API Reference
+## Cypher App Reference (An Implementation of Cypher API)
 
 #### View Cypher App (An Implementation of Cypher API) at : https://github.com/skt2020/cypher
 
